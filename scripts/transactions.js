@@ -3,30 +3,28 @@ var showViewModal = (id) => {
     var modal = bootstrap.Modal.getOrCreateInstance(modalEl)
     let modalBody = $(".modal-body", modalEl)
 
-    modal.show()
+    $(".modal-header h5", modalEl).html(`Transaction #${id}`)
 
-    modalEl.on("shown.bs.modal", (event) => {
-        $(".modal-header h5", modalEl).html(`Transaction #${id}`)
+    $.get({
+        url: `http://localhost/api/transactions/${id}`,
+        contentType: "application/json",
+        beforeSend: function () {
+            $('.global-spinner').show();
+        },
+        success: function (res) {
+            let table = $("table", modalBody)
+            table.removeClass("d-none")
 
-        $.get({
-            url: `http://localhost/api/transactions/${id}`,
-            contentType: "application/json",
-            success: function (res) {
-                $("#modal-view-spinner", modalBody).addClass("d-none")
-                let table = $("table", modalBody)
-                table.removeClass("d-none")
+            $("td.transaction-id", table).html(res.id)
+            $("td.transaction-type", table).html(res.type)
+            $("td.transaction-amount", table).html(res.amount)
+            $("td.transaction-comment", table).html(res.comment)
 
-                $("td.transaction-id", table).html(res.id)
-                $("td.transaction-type", table).html(res.type)
-                $("td.transaction-amount", table).html(res.amount)
-                $("td.transaction-comment", table).html(res.comment)
-            },
-        })
-    })
-
-    modalEl.on("hidden.bs.modal", (event) => {
-        $("#modal-view-spinner", modalBody).removeClass("d-none")
-        $("table", modalBody).addClass("d-none")
+            modal.show()
+        },
+        complete: function () {
+            $('.global-spinner').hide()
+        },
     })
 }
 
@@ -40,12 +38,83 @@ var showEditModal = (id) => {
     $.get({
         url: `http://localhost/api/transactions/${id}`,
         contentType: 'application/json',
-        success: function (response) {
-            $("[name='type']", modalBody).val(response)
+        beforeSend: function () {
+            $('.global-spinner').show()
         },
+        success: function (response) {
+            $(`[name='type'][value='${response.typeValue}']`, modalBody).prop('checked', true);
+            $("[name='amount']", modalBody).val(response.amount);
+            $("[name='currency']", modalBody).val(response.currencyValue).change();
+            $("[name='comment']", modalBody).val(response.comment);
+
+            modal.show()
+        },
+        complete: function () {
+            $('.global-spinner').hide()
+        }
     })
 
-    modal.show()
+    let form = $('form#edit-form', modalBody);
+
+    form.on('submit', function (e) {
+        e.preventDefault();
+
+        $("button[type=submit] span", form).removeClass("d-none")
+        $("button[type=submit]", form).attr("disabled", true)
+
+        let type = $("[name='type']:checked", form).val()
+        let amount = $("[name='amount']", form).val()
+        let currency = $("[name='currency']", form).val()
+        let comment = $("[name='comment']", form).val()
+
+        let data = {
+            type: type,
+            amount: amount,
+            currency: currency,
+            comment: comment,
+        };
+
+        $.ajax({
+            url: "http://localhost/api/transactions/" + id,
+            type: "PUT",
+            contentType: "application/json",
+            dataType: 'json',
+            data: JSON.stringify(data),
+            beforeSend: () => {
+                $(".errors", form).html("");
+            },
+            success: (res) => {
+                console.log(res)
+                window.location.href = '/transactions.html';
+            },
+            error: (error) => {
+                console.log(error.responseJSON)
+                let errorList = error.responseJSON.errors;
+                let message = error.responseJSON.message;
+
+                let alertMessage = `
+                    <div class="alert alert-danger fw-bold" role="alert">
+                      ${message}
+                    </div>
+                `;
+                $(".errors", form).append(alertMessage);
+
+                $.each(errorList, (index, value) => {
+                    let alert = `
+                        <div class="alert alert-danger" role="alert">
+                          ${value}
+                        </div>
+                    `;
+                    $(".errors", form).append(alert);
+                })
+            },
+            complete: () => {
+                $("button[type=submit] span", form).addClass("d-none")
+                $("button[type=submit]", form).attr("disabled", false)
+            },
+        });
+    })
+
 }
 
 var showDeleteModal = (id) => {
@@ -53,22 +122,20 @@ var showDeleteModal = (id) => {
     let modal = bootstrap.Modal.getOrCreateInstance(modalEl)
     let modalBody = $(".modal-body", modalEl)
 
+    $("p span.id", modalBody).html(id)
+
     modal.show();
 
-    modalEl.on("shown.bs.modal", (event) => {
-        $("p span.id", modalBody).html(id)
-
-        $("button.delete", modalBody).click(() => {
-            $("button.delete span", modalBody).removeClass("d-none")
-            $.ajax({
-                url: `http://localhost/api/transactions/${id}`,
-                type: "DELETE",
-                contentType: "application/json",
-                success: (res) => {
-                    modal.hide()
-                    window.location.reload()
-                },
-            })
+    $("button.delete", modalBody).click(() => {
+        $("button.delete span", modalBody).removeClass("d-none")
+        $.ajax({
+            url: `http://localhost/api/transactions/${id}`,
+            type: "DELETE",
+            contentType: "application/json",
+            success: (res) => {
+                modal.hide()
+                window.location.reload()
+            },
         })
     })
 }
@@ -127,6 +194,7 @@ var Transactions = (function () {
 
     let handleRadioChange = () => {
         $("[name='filter-btn']").change(function () {
+            $("#transactions-table tfoot .balance").html("")
             handleAllTransactions($(this).val());
         })
     };
