@@ -22,6 +22,7 @@ var LoginPage = function () {
                 },
                 success: function (res) {
                     Cookies.set('token', res.token);
+                    Cookies.set('username', res.user.name);
                     window.location.href = '/transactions.html';
                 },
                 error: function (error) {
