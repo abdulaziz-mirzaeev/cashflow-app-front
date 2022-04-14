@@ -6,8 +6,8 @@ var showViewModal = (id) => {
     $(".modal-header h5", modalEl).html(`Transaction #${id}`)
 
     $.get({
-        url: `http://localhost/api/transactions/${id}`,
-        contentType: "application/json",
+        url: `${URL}/api/transactions/${id}`,
+        dataType: "json",
         beforeSend: function () {
             $('.global-spinner').show();
         },
@@ -36,8 +36,8 @@ var showEditModal = (id) => {
     $(".modal-title span.id", modalEl).html(id)
 
     $.get({
-        url: `http://localhost/api/transactions/${id}`,
-        contentType: 'application/json',
+        url: `${URL}/api/transactions/${id}`,
+        dataType: 'json',
         beforeSend: function () {
             $('.global-spinner').show()
         },
@@ -75,7 +75,7 @@ var showEditModal = (id) => {
         };
 
         $.ajax({
-            url: "http://localhost/api/transactions/" + id,
+            url: URL + "/api/transactions/" + id,
             type: "PUT",
             contentType: "application/json",
             dataType: 'json',
@@ -129,9 +129,9 @@ var showDeleteModal = (id) => {
     $("button.delete", modalBody).click(() => {
         $("button.delete span", modalBody).removeClass("d-none")
         $.ajax({
-            url: `http://localhost/api/transactions/${id}`,
+            url: `${URL}/api/transactions/${id}`,
             type: "DELETE",
-            contentType: "application/json",
+            dataType: "json",
             success: (res) => {
                 modal.hide()
                 window.location.reload()
@@ -147,9 +147,10 @@ var Transactions = (function () {
 
     var handleAllTransactions = (endpoint = "") => {
         $.ajax({
-            url: "http://localhost/api/transactions" + endpoint,
+            url: URL + "/api/transactions" + endpoint,
             type: "GET",
             contentType: "application/json",
+            dataType: 'json',
             beforeSend: function () {
                 $("#transactions-table tbody").html("");
                 $("#table-spinner").toggleClass("d-none")

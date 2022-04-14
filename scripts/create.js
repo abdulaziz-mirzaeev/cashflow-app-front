@@ -22,7 +22,7 @@ var CreateForm = (function () {
             console.log(data)
 
             $.ajax({
-                url: "http://localhost/api/transactions",
+                url: URL + "/api/transactions",
                 type: "POST",
                 contentType: "application/json",
                 dataType: 'json',

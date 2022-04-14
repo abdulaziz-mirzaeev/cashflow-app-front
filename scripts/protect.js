@@ -6,8 +6,9 @@ var Auth = function () {
 
         $.ajaxSetup({
             headers: {
-                Authorization: 'Bearer ' + Cookies.get('token')
-            }
+                Authorization: 'Bearer ' + Cookies.get('token'),
+                Accept: 'application/json'
+            },
         });
 
         let username = Cookies.get('username') || 'User';
@@ -20,7 +21,7 @@ var Auth = function () {
             e.preventDefault();
 
             $.post({
-                url: 'http://localhost/api/logout',
+                url: URL + '/api/logout',
                 dataType: 'json',
                 success: function () {
                     Cookies.remove('token');

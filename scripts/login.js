@@ -11,7 +11,7 @@ var LoginPage = function () {
             };
 
             $.ajax({
-                url: 'http://localhost/api/login',
+                url: URL + '/api/login',
                 type: 'POST',
                 data: data,
                 dataType: 'json',
